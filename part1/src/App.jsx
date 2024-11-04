@@ -1,35 +1,73 @@
-const Header = ({ course }) => {
-  return <h1>{course}</h1>
-}
+import { useState } from 'react';
 
-const Content = ({ parts }) => (
-  <div>
-    {parts.map((part, index) => (
-      <p key={index}>{part.name} {part.exercises}</p>
-    ))}
-  </div>
-);
+const Statistic = ({ text, value }) => {
+  return (
+    <p>
+      {text}: {value}
+    </p>
+  );
+};
 
-const Total = ({ exercises1, exercises2, exercises3 }) => {
-  return <p>Number of exercises {exercises1 + exercises2 + exercises3}</p>
-}
+const Statistics = ({ good, neutral, bad, all }) => {
+  if (all === 0) {
+    return (
+      <div>
+        <p><b>statistics</b></p>
+        <p>No feedback given</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div>
+      <p><b>statistics</b></p>
+      <table>
+        <tbody>
+          <tr>
+            <td>good</td>
+            <td>{good}</td>
+          </tr>
+          <tr>
+            <td>neutral</td>
+            <td>{neutral}</td>
+          </tr>
+          <tr>
+            <td>bad</td>
+            <td>{bad}</td>
+          </tr>
+          <tr>
+            <td>all</td>
+            <td>{all}</td>
+          </tr>
+          <tr>
+            <td>average</td>
+            <td>{(good - bad) / all}</td>
+          </tr>
+          <tr>
+            <td>positive</td>
+            <td>{`${(good / all) * 100} %`}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 const App = () => {
-  const course = 'Half Stack application development'
-  const parts = [
-    { name: 'Fundamentals of React', exercises: 10 },
-    { name: 'Using props to pass data', exercises: 7 },
-    { name: 'State of a component', exercises: 14 }
-  ];
+  const [good, setGood] = useState(0);
+  const [neutral, setNeutral] = useState(0);
+  const [bad, setBad] = useState(0);
+  const all = good + neutral + bad;
 
   return (
     <div>
-      <Header course={course} />
-      <Content parts={parts} />
-      <Total exercises1={parts[0].exercises} exercises2={parts[1].exercises} exercises3={parts[2].exercises} />
+      <p><b>give feedback</b></p>
+      <button onClick={() => setGood(good + 1)}>good</button>
+      <button onClick={() => setNeutral(neutral + 1)}>neutral</button>
+      <button onClick={() => setBad(bad + 1)}>bad</button>
+      <Statistics good={good} neutral={neutral} bad={bad} all={all} />
     </div>
-  )
-}
+  );
+};
 
-
-export default App
+export default App;
