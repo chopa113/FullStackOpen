@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Filter = ({ filter, handleFilterChange }) => {
   return (
@@ -32,7 +33,7 @@ const Persons = ({ persons, handleClick }) => {
       {persons.map((person) => (
         <p key={person.id}>
           {person.name} {person.number}
-          <button name="delete" onClick={handleClick()}>delete</button>
+          <button name="delete" onClick={() => handleClick(person)}>delete</button>
         </p>
       ))}
     </div>
@@ -49,29 +50,45 @@ const App = () => {
       .then((data) => setPersons(data));
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newName = e.target.elements.name.value;
     const newNumber = e.target.elements.number.value;
-    if (persons.map((person) => person.name).includes(newName)) {
-      alert(`${newName} is already added to phonebook`);
-    } else {
-      setPersons([
-        ...persons,
-        { name: newName, number: newNumber, id: persons.length + 1 },
-      ]);
-      e.target.elements.name.value = '';
-      e.target.elements.number.value = '';
+    if (persons.some((person) => person.name === newName) || persons.some((person) => person.number === newNumber)) {
+      if(persons.some((person) => person.name === newName && person.number === newNumber)){
+        alert(`${newName} is already added to phonebook`);
+      }
+      else{
+        if(confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)){
+          const person = persons.find(p => p.name === newName);
+          const updatedPerson = { ...person, number: newNumber };
+          const response = await axios.put(`http://localhost:3001/persons/${person.id}`, updatedPerson);
+          setPersons(persons.map(p => p.id !== person.id ? p : response.data));
+        }
+      }
+    }else{
+      const response = await axios.post('http://localhost:3001/persons', { name: newName, number: newNumber });
+      console.log(response.data);
+      setPersons(persons.concat(response.data));
     }
+    
+    
+
   };
 
   const handleFilterChange = (e) => {
     setFilter(e.target.value);
   };
 
-  const handleDelete = (id) => {
-    setPersons(persons.filter((person) => person.id !== id));
-  }
+  const handleDelete = (person) => {
+    if(confirm("Delete " + person.name + "?")){
+      axios.delete(`http://localhost:3001/persons/${person.id}`);
+      setPersons(persons.filter(p => p.id !== person.id));
+    }else{
+      return;
+    }
+    
+  };
 
   const filteredPersons = persons.filter((person) =>
     person.name.toLowerCase().includes(filter.toLowerCase())
@@ -87,8 +104,7 @@ const App = () => {
 
       <PersonForm handleSubmit={handleSubmit} />
 
-      <Persons persons={filteredPersons} />
-
+      <Persons persons={filteredPersons} handleClick={handleDelete} />
     </div>
   );
 };
