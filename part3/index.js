@@ -1,4 +1,15 @@
-const http = require('http')
+const express = require('express');
+const morgan = require('morgan');
+
+const app = express();
+const port = 3001;
+
+app.use(express.json());
+
+morgan.token('body', req => {
+  return JSON.stringify(req.body);
+});
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
 let persons = [
   { 
@@ -23,21 +34,39 @@ let persons = [
   }
 ]
 
-const app = http.createServer((request, response) => {
-  if (request.method === 'GET' && request.url === '/api/persons') {
-    response.writeHead(200, { 'Content-Type': 'application/json' })
-    response.end(JSON.stringify(persons))
-  }else if (request.method === 'GET' && request.url === '/info') {
-    const date = new Date()
-    response.writeHead(200, { 'Content-Type': 'text/html' })
-    response.end(`<p>Phonebook has info for ${persons.length} people</p><p>${date}</p>`)
-  }
-  else {
-    response.writeHead(404)
-    response.end()
-  }
-})
+app.get('/api/persons', (req, res) => {
+  res.send(persons);
+});
 
-const PORT = 3001
-app.listen(PORT)
-console.log(`Server running on port ${PORT}`)
+app.get('/api/persons/:id', (req, res) => {
+  res.send(persons[req.params.id - 1]);
+});
+
+app.get('/info', (req, res) => {
+  res.send("Phonebook has info for " + persons.length + " people <br>" + new Date());
+});
+
+app.delete('/api/persons/:id', (req, res) => {
+  delete persons[req.params.id - 1];
+  res.send('Deleted person with id ' + req.params.id);
+});
+
+app.post('/api/persons', (req, res) => {
+  if (!req.body.name) {
+    return res.status(400).json({ error: 'name missing' });
+  }
+  else if (!req.body.number) {
+    return res.status(400).json({ error: 'number missing' });
+  }
+  else if (persons.find(person => person.name === req.body.name)) {
+    return res.status(400).json({ error: 'name must be unique' });
+  }
+  const person = req.body;
+  person.id = Math.floor(Math.random() * 1000).toString();
+  persons.push(person);
+  res.send(person);
+});
+
+app.listen(port, () => {
+  console.log('Server running on port ' + port);
+});
