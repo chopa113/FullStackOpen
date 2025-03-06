@@ -28,7 +28,9 @@ app.get('/api/persons/:id', (req, res) => {
 });
 
 app.get('/info', (req, res) => {
-  res.send("Phonebook has info for " + persons.length + " people <br>" + new Date());
+  People.find({}).then(persons => {
+    res.send("Phonebook has info for " + persons.length + " people <br>" + new Date());
+  })
 });
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -89,21 +91,32 @@ app.post('/api/persons', (req, res) => {
   }
 });
 
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', (request, response, next) => {
   const body = request.body
-
-  if (!body.content) {
-    return response.status(400).json({ error: 'content missing' })
-  }
 
   const note = new Note({
     content: body.content,
     important: body.important || false,
   })
 
-  note.save().then(savedNote => {
-    response.json(savedNote)
-  })
+  note.save()
+    .then(savedNote => {
+      response.json(savedNote)
+    })
+    .catch(error => next(error))
+
+    const errorHandler = () => {
+      console.error(error.message)
+
+      if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+
+      } else if (error.name === 'ValidationError') {
+        return response.status(400).json({ error: error.message })
+      }
+
+      next(error)
+    }
 });
 
 app.get('/api/notes/:id', (request, response) => {
