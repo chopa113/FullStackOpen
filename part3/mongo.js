@@ -29,7 +29,7 @@ if(process.argv.length > 3){
     });
 }else{
     Person.find({}).then(result=>{
-        console.log('phonebook:')
+        console.log('phonebook: ')
         result.forEach(person =>{
             console.log(person.name , person.number)
         })
