@@ -1,12 +1,15 @@
 require('dotenv').config()
 const express = require('express');
 const morgan = require('morgan');
-const Note = require('./models/note')
-const People = require('./models/people')
+const Note = require('./models/note');
+const People = require('./models/people');
+var router = express.Router();
+var path = __dirname + '/views/';
 
 const app = express();
 const port = process.env.PORT
 
+app.use('/css', express.static(__dirname + '/node_modules/bootstrap/dist/css'));
 app.use(express.json());
 
 morgan.token('body', req => {
@@ -118,6 +121,12 @@ app.post('/api/notes', (request, response, next) => {
       next(error)
     }
 });
+
+router.get("/",function(req,res){
+  res.sendFile(path + "index.html");
+});
+
+app.use("/",router);
 
 app.get('/api/notes/:id', (request, response) => {
   Note.findById(request.params.id).then(note => {
